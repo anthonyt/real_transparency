@@ -1,0 +1,47 @@
+Objects and relationships the system needs to model:
+
+    province
+        has many electoral_districts
+
+    electoral_district
+        has many terms
+        has a province
+        active (bool)
+
+    term
+        has a participant
+        has a constituency
+        start, end date
+
+    party_affiliation
+        has a participant
+        has a party
+        start, end date
+
+    party
+        has many party_affiliations
+
+    participant
+        has many party_affiliations
+        has many terms
+        has many votes
+        has many bills (sponsor of)
+
+    house_vote
+        has a bill
+        has many votes
+        date
+        parliament, session, vote number
+
+    vote
+        has a participant
+        has a house_vote
+        yea/nay/paired
+
+    bill
+        has a house_vote (or not)
+        has a participant (sponsor)
+        has many bills (related)
+        context
+        state (pending, approved, failed)
+
