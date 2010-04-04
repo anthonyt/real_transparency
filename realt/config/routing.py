@@ -18,8 +18,17 @@ def make_map(config):
     map.connect('/error/{action}/{id}', controller='error')
 
     # CUSTOM ROUTES HERE
+    map.connect('/xmlimport/json/{parliament:\d+}/{session:\d+}',
+        controller = 'xmlimport',
+        action = 'index',
+    )
+    map.connect('/xmlimport/json/{parliament:\d+}/{session:\d+}/{vote_number:\d+}',
+        controller = 'xmlimport',
+        action = 'index',
+    )
 
     map.connect('/{controller}/{action}')
     map.connect('/{controller}/{action}/{id}')
+
 
     return map
