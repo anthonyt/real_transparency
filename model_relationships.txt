@@ -5,8 +5,8 @@ Objects and relationships the system needs to model:
 
     electoral_district
         has many terms
-        has a province
-        active (bool)
+        belongs to a province
+        start, end date
 
     term
         has a participant
@@ -20,6 +20,7 @@ Objects and relationships the system needs to model:
 
     party
         has many party_affiliations
+        start, end date
 
     participant
         has many party_affiliations
