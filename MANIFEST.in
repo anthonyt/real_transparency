@@ -1,0 +1,3 @@
+include realt/config/deployment.ini_tmpl
+recursive-include realt/public *
+recursive-include realt/templates *
