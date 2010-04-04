@@ -13,9 +13,9 @@ setup(
     author_email='',
     url='',
     install_requires=[
-        "Pylons>=0.9.7",
-        "SQLAlchemy>=0.5",
-        "Genshi>=0.4",
+        "Pylons == 1.0rc1",
+        "SQLAlchemy == 0.6beta3",
+        "Genshi == 0.5.1",
     ],
     setup_requires=["PasteScript>=1.6.3"],
     packages=find_packages(exclude=['ez_setup']),
