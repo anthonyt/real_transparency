@@ -45,7 +45,6 @@ def get_votes_url(parliament, session, vote_number):
 def get_bills_xml(parliament, session):
     # TODO: catch file IO exceptions
     url = get_bills_url(parliament, session)
-    print "Fetching BillsXML from URL:", url
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
@@ -55,7 +54,6 @@ def get_bills_xml(parliament, session):
 def get_votes_xml(parliament, session, vote_number):
     # TODO: catch file IO exceptions
     url = get_votes_url(parliament, session, vote_number)
-    print "Fetching VotesXML from URL:", url
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
