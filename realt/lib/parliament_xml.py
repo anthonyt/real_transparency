@@ -7,6 +7,8 @@ import lxml.etree as ET
 
 cached_xml = dict()
 
+parliament_url = "http://www2.parl.gc.ca"
+
 def get_bills_url(parliament, session):
     today = datetime.date.today()
     one_day = datetime.timedelta(days=1)
@@ -27,7 +29,7 @@ def get_bills_url(parliament, session):
         'Tie': 'True',
         'xml': 'True'
     }
-    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/ChamberVoteList.aspx"
+    base_url = parliament_url + "/HouseChamberBusiness/ChamberVoteList.aspx"
     return base_url + '?' + urllib.urlencode(get_vars)
 
 def get_votes_url(parliament, session, vote_number):
@@ -41,7 +43,7 @@ def get_votes_url(parliament, session, vote_number):
         'vote': vote_number,
         'xml': 'True'
     }
-    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/ChamberVoteDetail.aspx"
+    base_url = parliament_url + "/HouseChamberBusiness/ChamberVoteDetail.aspx"
     return base_url + '?' + urllib.urlencode(get_vars)
 
 def get_bills_xml(parliament, session):
@@ -105,7 +107,7 @@ class ChamberVoteDetails(object):
 
             link_start = html.index('href', label_index) + len('href="')
             link_end = html.index('">', link_start)
-            link = html[link_start:link_end]
+            link = parliament_url + html[link_start:link_end]
 
             title_start = link_end + len('">')
             title_end = html.index("</a>", title_start)
