@@ -5,6 +5,8 @@ import urllib
 import datetime
 import lxml.etree as ET
 
+cached_xml = dict()
+
 def get_bills_url(parliament, session):
     today = datetime.date.today()
     one_day = datetime.timedelta(days=1)
@@ -25,7 +27,7 @@ def get_bills_url(parliament, session):
         'Tie': 'True',
         'xml': 'True'
     }
-    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/Chambervotelist.aspx"
+    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/ChamberVoteList.aspx"
     return base_url + '?' + urllib.urlencode(get_vars)
 
 def get_votes_url(parliament, session, vote_number):
@@ -39,41 +41,80 @@ def get_votes_url(parliament, session, vote_number):
         'vote': vote_number,
         'xml': 'True'
     }
-    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/Chambervotedetail.aspx"
+    base_url = "http://www2.parl.gc.ca/HouseChamberBusiness/ChamberVoteDetail.aspx"
     return base_url + '?' + urllib.urlencode(get_vars)
 
 def get_bills_xml(parliament, session):
     # TODO: catch file IO exceptions
+    hash = 'bills_%s-%s' % ( parliament, session )
+    if hash in cached_xml:
+        return cached_xml[hash]
     url = get_bills_url(parliament, session)
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
+    cached_xml[hash] = xml
     filehandle.close()
     return xml
 
 def get_votes_xml(parliament, session, vote_number):
     # TODO: catch file IO exceptions
+    hash = 'votes_%s-%s-%s' % ( parliament, session, vote_number )
+    if hash in cached_xml:
+        return cached_xml[hash]
+
     url = get_votes_url(parliament, session, vote_number)
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
+    cached_xml[hash] = xml
     filehandle.close()
     return xml
 
 class ChamberVoteDetails(object):
-    def __init__(self, parliament, session, number):
+    def __init__(self, parliament, session, number, sitting, date, description):
         self.parliament = parliament
         self.session = session
         self.number = number
 
+        self.sitting = sitting
+        self.date = date
+        self.description = description
+
         self.context = None
         self.sponsor = None
         self.decision = None
-        self.related_bills = []
+        self.related_bill = None
         self.participants = []
 
     def get_xml(self):
         return get_votes_xml(self.parliament, self.session, self.number)
+
+    def sync_journal(self):
+        # TODO: catch file IO exceptions
+        url = get_votes_url(self.parliament, self.session, self.number).replace('xml=True', 'xml=False')
+        filehandle = urllib.urlopen(url)
+        html = filehandle.read()
+        filehandle.close()
+
+        title = ''
+        link = ''
+
+        try:
+            label_index = html.index('voteJournalsLabel')
+
+            link_start = html.index('href', label_index) + len('href="')
+            link_end = html.index('">', link_start)
+            link = html[link_start:link_end]
+
+            title_start = link_end + len('">')
+            title_end = html.index("</a>", title_start)
+            title = html[title_start:title_end]
+
+        except Exception, e:
+            pass
+
+        self.journal = (title, link)
 
     def sync_from_xml(self):
         xml = self.get_xml()
@@ -81,13 +122,19 @@ class ChamberVoteDetails(object):
         context = root.xpath('Context')[0]
         sponsor = root.xpath('Sponsor')[0]
         decision = root.xpath('Decision')[0]
-        related_bills = root.xpath('RelatedBill')
+        related_bill = root.xpath('RelatedBill')[0]
         participants = root.xpath('Participant')
 
-        self.context = "\n".join(['<p>' + ' '.join(para.text.split()) + '</p>' for para in context.xpath('Para')])
+        # Get the context in a more text friendly format:
+        self.context = "".join([' '.join(ET.tostring(para).strip().split()) for para in context.xpath('Para')])
+        # Replace known styling tags.
+        self.context = self.context.replace('<Para>', '').replace('</Para>', '\n').strip()
+        self.context = self.context.replace('<Emphasis>', '<em>').replace('</Emphasis>', '</em>')
+
         self.sponsor = sponsor.text
         self.decision = decision.text
-        self.related_bills = [x.attrib['number'] for x in related_bills]
+        self.related_bill = dict(related_bill.attrib)
+        self.related_bill['title_text'] = related_bill.text.strip()
 
         self.participants = []
         for p in participants:
@@ -128,23 +175,26 @@ def chamber_vote_details(parliament, session, vote_number=None):
     containing only the ChamberVoteDetails object that represents that vote.
     """
     cvdetails = []
-    if vote_number is None:
-        bills_xml  = get_bills_xml(parliament, session)
-        bills_root = ET.XML(bills_xml)
-        votes = [
-            (vote_node.attrib['parliament'],
-             vote_node.attrib['session'],
-             vote_node.attrib['number'])
-            for vote_node in bills_root
-        ]
+    bills_xml  = get_bills_xml(parliament, session)
+    bills_root = ET.XML(bills_xml)
+
+    if vote_number is not None:
+        bills_root = bills_root.xpath('Vote[@number=%d]' % vote_number)
+
+    for vote_node in bills_root:
         # example vote_node attrs:
         # {'session': '2', 'date': '2009-04-01', 'parliament': '40', 'number': '47', 'sitting': '38'}
-    else:
-        votes = [(parliament, session, vote_number)]
-
-    for (parliament, session, vote_number) in votes:
-        cvd = ChamberVoteDetails(parliament, session, vote_number)
+        args = (
+            vote_node.attrib['parliament'],
+            vote_node.attrib['session'],
+            vote_node.attrib['number'],
+            vote_node.attrib['sitting'],
+            vote_node.attrib['date'],
+            ET.tostring(vote_node.xpath('Description')[0]).strip()[13:-14]
+        )
+        cvd = ChamberVoteDetails(*args)
         cvd.sync_from_xml()
+        cvd.sync_journal()
         cvdetails.append(cvd)
         ## print all participants and how they voted
         # for participant in cvd.participants:
@@ -156,7 +206,8 @@ def chamber_vote_details(parliament, session, vote_number=None):
         # print 'Context:', cvd.context.encode('utf-8')
         # print 'Sponsor:', cvd.sponsor.encode('utf-8')
         # print 'Decision:', cvd.decision.encode('utf-8')
-        # print 'Related Bills:', cvd.related_bills
+        # print 'Related Bill:', cvd.related_bill
+        # print 'Published vote and details:', cvd.journal
         # print "Yeas:", len([p for p in cvd.participants if p['vote'] == 'yea'])
         # print "Nays:", len([p for p in cvd.participants if p['vote'] == 'nay'])
         # print "Paired:", len([p for p in cvd.participants if p['vote'] == 'paired'])

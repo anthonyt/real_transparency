@@ -17,8 +17,25 @@ class XmlimportController(BaseController):
         parliament = int(parliament)
         session = int(session)
 
-        return dict(
-            parliament = parliament,
-            session = session,
-            vote_number = vote_number,
-        )
+        data = self._pull_data(parliament, session, vote_number)
+        return data
+
+    def _pull_data(self, parliament, session, vote_number):
+        cvds = chamber_vote_details(parliament, session, vote_number)
+        results = []
+        for cvd in cvds:
+            results.append(dict(
+                parliament = cvd.parliament,
+                session = cvd.session,
+                vote_number = cvd.number,
+                sitting = cvd.sitting,
+                description = cvd.description,
+                date = cvd.date,
+                context = cvd.context,
+                sponsor = cvd.sponsor,
+                decision = cvd.decision,
+                related = cvd.related_bill,
+                journal = cvd.journal,
+                participants = cvd.participants,
+            ))
+        return results
