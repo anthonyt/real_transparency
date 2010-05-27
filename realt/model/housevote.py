@@ -18,7 +18,7 @@ class HouseVote(Base):
     decision = Column(Unicode)
 
     bill_id = Column(Integer, ForeignKey('bill.id'), nullable=False)
-    bill = relation('Bill', backref=backref('terms'))
+    bill = relation('Bill', backref=backref('votes'))
 
     def __init__(self, bill=None):
         self.bill = bill

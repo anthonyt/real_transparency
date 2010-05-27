@@ -17,7 +17,7 @@ class MemberVote(Base):
     house_vote = relation('HouseVote', backref=backref('member_votes'))
 
     mp_id = Column(Integer, ForeignKey('mp.id'), nullable=False)
-    mp = relation('MP', backref=backref('terms'))
+    mp = relation('MP', backref=backref('votes'))
 
     def __init__(self, value, mp, house_vote):
         self.mp = mp
