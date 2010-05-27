@@ -9,6 +9,9 @@ cached_xml = dict()
 
 parliament_url = "http://www2.parl.gc.ca"
 
+import logging
+log = logging.getLogger(__name__)
+
 def get_bills_url(parliament, session):
     today = datetime.date.today()
     one_day = datetime.timedelta(days=1)
@@ -30,7 +33,9 @@ def get_bills_url(parliament, session):
         'xml': 'True'
     }
     base_url = parliament_url + "/HouseChamberBusiness/ChamberVoteList.aspx"
-    return base_url + '?' + urllib.urlencode(get_vars)
+    url = base_url + '?' + urllib.urlencode(get_vars)
+    log.info("Bills URL for (%d, %d): %s", parliament, session, url)
+    return url
 
 def get_votes_url(parliament, session, vote_number):
     get_vars = {
@@ -44,12 +49,23 @@ def get_votes_url(parliament, session, vote_number):
         'xml': 'True'
     }
     base_url = parliament_url + "/HouseChamberBusiness/ChamberVoteDetail.aspx"
-    return base_url + '?' + urllib.urlencode(get_vars)
+    url = base_url + '?' + urllib.urlencode(get_vars)
+    log.info("Votes URL for (%d, %d, %d): %s", parliament, session, vote_number, url)
+    return url
 
 def get_bills_xml(parliament, session):
+    """Returns the xml string listing all votes, based on id numbers.
+
+    :param parliament: the parliament number
+    :type parliament: int
+
+    :param session: the session number within the parliament
+    :type session: int
+    """
     # TODO: catch file IO exceptions
-    hash = 'bills_%s-%s' % ( parliament, session )
+    hash = 'bills_%d-%d' % ( parliament, session )
     if hash in cached_xml:
+        log.info('Returning cached bills XML for (%d, %d)', parliament, session)
         return cached_xml[hash]
     url = get_bills_url(parliament, session)
     filehandle = urllib.urlopen(url)
@@ -57,12 +73,25 @@ def get_bills_xml(parliament, session):
     xml = filehandle.read()
     cached_xml[hash] = xml
     filehandle.close()
+    log.info('Got bills XML for (%d, %d)', parliament, session)
     return xml
 
 def get_votes_xml(parliament, session, vote_number):
+    """Returns the XML string for a vote, based on id numbers.
+
+    :param parliament: the parliament number
+    :type parliament: int
+
+    :param session: the session number within the parliament
+    :type session: int
+
+    :param vote_number: the vote number within the session
+    :type vote_number: int
+    """
     # TODO: catch file IO exceptions
-    hash = 'votes_%s-%s-%s' % ( parliament, session, vote_number )
+    hash = 'votes_%d-%d-%d' % ( parliament, session, vote_number )
     if hash in cached_xml:
+        log.info('Returning cached votes XML for (%d, %d, %d)', parliament, session, vote_number)
         return cached_xml[hash]
 
     url = get_votes_url(parliament, session, vote_number)
@@ -71,10 +100,31 @@ def get_votes_xml(parliament, session, vote_number):
     xml = filehandle.read()
     cached_xml[hash] = xml
     filehandle.close()
+    log.info('Got votes XML for (%d, %d, %d)', parliament, session, vote_number)
     return xml
 
 class ChamberVoteDetails(object):
     def __init__(self, parliament, session, number, sitting, date, description):
+        """Initialize a ChamberVoteDetails object.
+
+        :param parliament: the parliament number
+        :type parliament: int
+
+        :param session: the session number within the parliament
+        :type session: int
+
+        :param number: the vote number within the session
+        :type number: int
+
+        :param sitting: the sitting number within the session
+        :type sitting: int
+
+        :param date: the date of the vote
+        :type date: :class:`datetime.date` instance
+
+        :param description: the text description of the vote
+        :type description: basestring
+        """
         self.parliament = parliament
         self.session = session
         self.number = number
@@ -90,9 +140,16 @@ class ChamberVoteDetails(object):
         self.participants = []
 
     def get_xml(self):
+        """Returns the XML string representing this vote's details.
+        """
         return get_votes_xml(self.parliament, self.session, self.number)
 
     def sync_journal(self):
+        """Sets self.journal.
+
+        self.journal is a tuple of unicode objects representing the title and
+        URL this vote's published entry in the house journals.
+        """
         # TODO: catch file IO exceptions
         url = get_votes_url(self.parliament, self.session, self.number).replace('xml=True', 'xml=False')
         filehandle = urllib.urlopen(url)
@@ -119,6 +176,10 @@ class ChamberVoteDetails(object):
         self.journal = (title, link)
 
     def sync_from_xml(self):
+        """Updates the properties of this vote from the online XML document.
+
+        Properties set: context, sponsor, decision, related_bill, participants.
+        """
         xml = self.get_xml()
         root = ET.XML(xml)
         context = root.xpath('Context')[0]
@@ -183,15 +244,17 @@ def chamber_vote_details(parliament, session, vote_number=None):
     if vote_number is not None:
         bills_root = bills_root.xpath('Vote[@number=%d]' % vote_number)
 
-    for vote_node in bills_root:
+    for vote_node in bills_root[:1]:
         # example vote_node attrs:
         # {'session': '2', 'date': '2009-04-01', 'parliament': '40', 'number': '47', 'sitting': '38'}
+        y, m, d = [int(x) for x in vote_node.attrib['date'].split('-')]
+        vote_date = datetime.date(y, m, d)
         args = (
-            vote_node.attrib['parliament'],
-            vote_node.attrib['session'],
-            vote_node.attrib['number'],
-            vote_node.attrib['sitting'],
-            vote_node.attrib['date'],
+            int(vote_node.attrib['parliament']),
+            int(vote_node.attrib['session']),
+            int(vote_node.attrib['number']),
+            int(vote_node.attrib['sitting']),
+            vote_date,
             ET.tostring(vote_node.xpath('Description')[0]).strip()[13:-14]
         )
         cvd = ChamberVoteDetails(*args)

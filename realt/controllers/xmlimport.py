@@ -30,7 +30,7 @@ class XmlimportController(BaseController):
                 vote_number = cvd.number,
                 sitting = cvd.sitting,
                 description = cvd.description,
-                date = cvd.date,
+                date = cvd.date.strftime('%y-%m-%d'),
                 context = cvd.context,
                 sponsor = cvd.sponsor,
                 decision = cvd.decision,
@@ -38,4 +38,5 @@ class XmlimportController(BaseController):
                 journal = cvd.journal,
                 participants = cvd.participants,
             ))
+
         return results
