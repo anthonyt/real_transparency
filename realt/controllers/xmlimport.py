@@ -4,7 +4,9 @@ from pylons import request, response, session, tmpl_context as c, url
 from pylons.controllers.util import abort, redirect
 
 from realt.lib.base import BaseController, expose
-from realt.lib.parliament_xml import chamber_vote_details
+from realt.lib.parliament_xml import chamber_vote_details, votes_in_session
+from realt.model import RawHouseVote
+from realt.model.meta import Session
 
 log = logging.getLogger(__name__)
 
@@ -21,22 +23,33 @@ class XmlimportController(BaseController):
         return data
 
     def _pull_data(self, parliament, session, vote_number):
-        cvds = chamber_vote_details(parliament, session, vote_number)
-        results = []
+        if vote_number:
+            vote_numbers = [vote_number]
+        else:
+            vote_numbers = votes_in_session(parliament, session)
+
+        rawvotes = Session.query(RawHouseVote)\
+            .filter(RawHouseVote.parliament==parliament)\
+            .filter(RawHouseVote.session==session)\
+            .filter(RawHouseVote.number.in_(vote_numbers))\
+            .all()
+
+        found_numbers = [rv.number for rv in rawvotes]
+        new_vote_numbers = [n for n in vote_numbers if n not in found_numbers]
+
+        log.info('Found these RawHouseVotes in the database: %r', found_numbers)
+        log.info('Looking up these new RawHouseVotes: %r', new_vote_numbers)
+
+        cvds = chamber_vote_details(parliament, session, new_vote_numbers)
         for cvd in cvds:
-            results.append(dict(
-                parliament = cvd.parliament,
-                session = cvd.session,
-                vote_number = cvd.number,
-                sitting = cvd.sitting,
-                description = cvd.description,
-                date = cvd.date.strftime('%y-%m-%d'),
-                context = cvd.context,
-                sponsor = cvd.sponsor,
-                decision = cvd.decision,
-                related = cvd.related_bill,
-                journal = cvd.journal,
-                participants = cvd.participants,
-            ))
+            rv = RawHouseVote(cvd)
+#            Session.add(rv)
+            rawvotes.append(rv)
+
+        results = []
+        for rv in rawvotes:
+            d = rv.to_dict()
+            d['date'] = d['date'].strftime('%y-%m-%d')
+            results.append(d)
 
         return results
