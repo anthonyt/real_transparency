@@ -249,8 +249,17 @@ def chamber_vote_details(parliament, session, vote_numbers=None):
     bills_xml  = get_bills_xml(parliament, session)
     bills_root = ET.XML(bills_xml)
 
-    if vote_numbers:
-        vote_nodes = [node for node in bills_root[:1] if int(node.attrib['number']) in vote_numbers]
+    # Filter vote nodes to the ones matching the requesting parliament and session.
+    vote_nodes = [
+        node
+        for node in bills_root
+        if int(node.attrib['parliament']) == parliament
+        and int(node.attrib['session']) == session
+    ]
+
+    # Filter vote nodes to the ones matching the requested vote numbers
+    if vote_numbers is not None:
+        vote_nodes = [node for node in vote_nodes if int(node.attrib['number']) in vote_numbers]
 
     for vote_node in vote_nodes:
         # example vote_node attrs:
