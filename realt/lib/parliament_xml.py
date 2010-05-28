@@ -1,5 +1,5 @@
 
-__all__ = ['chamber_vote_details']
+__all__ = ['chamber_vote_details', 'votes_in_session']
 
 import urllib
 import datetime
@@ -225,7 +225,15 @@ class ChamberVoteDetails(object):
             }
             self.participants.append(participant)
 
-def chamber_vote_details(parliament, session, vote_number=None):
+def votes_in_session(parliament, session):
+    """Return a list of vote numbers occurring during a given parliament and session.
+    """
+    bills_xml  = get_bills_xml(parliament, session)
+    bills_root = ET.XML(bills_xml)
+    numbers = [int(node.attrib['number']) for node in bills_root]
+    return numbers
+
+def chamber_vote_details(parliament, session, vote_numbers=None):
     """Return a list of ChamberVoteDetails representing the requested vote(s).
 
     Populates the fields of ChamberVoteDetails with information pulled down
@@ -241,10 +249,10 @@ def chamber_vote_details(parliament, session, vote_number=None):
     bills_xml  = get_bills_xml(parliament, session)
     bills_root = ET.XML(bills_xml)
 
-    if vote_number is not None:
-        bills_root = bills_root.xpath('Vote[@number=%d]' % vote_number)
+    if vote_numbers:
+        vote_nodes = [node for node in bills_root[:1] if int(node.attrib['number']) in vote_numbers]
 
-    for vote_node in bills_root[:1]:
+    for vote_node in vote_nodes:
         # example vote_node attrs:
         # {'session': '2', 'date': '2009-04-01', 'parliament': '40', 'number': '47', 'sitting': '38'}
         y, m, d = [int(x) for x in vote_node.attrib['date'].split('-')]
