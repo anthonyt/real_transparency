@@ -17,6 +17,8 @@ setup(
         "SQLAlchemy == 0.6",
         "Genshi == 0.5.1",
         "lxml",
+        "repoze.tm2 == 1.0a5",
+        "zope.sqlalchemy == 0.4",
     ],
     setup_requires=["PasteScript>=1.6.3"],
     packages=find_packages(exclude=['ez_setup']),

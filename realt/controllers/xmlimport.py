@@ -48,7 +48,7 @@ class XmlimportController(BaseController):
         cvds = chamber_vote_details(parliament, session, new_vote_numbers)
         for cvd in cvds:
             rv = RawHouseVote(cvd)
-#            Session.add(rv)
+            Session.add(rv)
             rawvotes.append(rv)
 
         results = []

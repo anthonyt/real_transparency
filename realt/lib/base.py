@@ -10,16 +10,6 @@ __all__ = ['BaseController']
 
 class BaseController(WSGIController):
 
-    def __call__(self, environ, start_response):
-        """Invoke the Controller"""
-        # WSGIController.__call__ dispatches to the Controller method
-        # the request is routed to. This routing information is
-        # available in environ['pylons.routes_dict']
-        try:
-            return WSGIController.__call__(self, environ, start_response)
-        finally:
-            Session.remove()
-
     def _perform_call(self, func, args):
         """
         _perform_call is called by _inspect_call in Pylons' WSGIController.

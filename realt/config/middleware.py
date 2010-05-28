@@ -6,9 +6,31 @@ from paste.urlparser import StaticURLParser
 from paste.deploy.converters import asbool
 from pylons.middleware import ErrorHandler, StatusCodeRedirect
 from pylons.wsgiapp import PylonsApp
+from repoze.tm import make_tm
 from routes.middleware import RoutesMiddleware
 
 from realt.config.environment import load_environment
+from realt.model.meta import Session
+
+class DBSessionRemoverMiddleware(object):
+    """Ensure the contextual session ends at the end of the request."""
+    def __init__(self, app, session=None):
+        self.app = app
+        self.session = session
+
+    def __call__(self, environ, start_response):
+        try:
+            return self.app(environ, start_response)
+        finally:
+            self.session.remove()
+
+def transaction_commit_veto(environ, status, headers):
+    """Veto the commit if the response's status code is an error code.
+
+    This hook is called by repoze.tm in case we want to veto a commit
+    for some reason. Return True to force a rollback.
+    """
+    return not 200 <= int(status.split(None, 1)[0]) < 400
 
 def make_app(global_conf, full_stack=True, static_files=True, **app_conf):
     """Create a Pylons WSGI application and return it
@@ -44,6 +66,12 @@ def make_app(global_conf, full_stack=True, static_files=True, **app_conf):
     app = SessionMiddleware(app, config)
 
     # CUSTOM MIDDLEWARE HERE (filtered by error handling middlewares)
+
+    # Add transaction management
+    app = make_tm(app, transaction_commit_veto)
+    app = DBSessionRemoverMiddleware(app, Session)
+
+    # END CUSTOM MIDDLEWARE
 
     if asbool(full_stack):
         # Handle Python exceptions
