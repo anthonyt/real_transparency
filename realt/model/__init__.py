@@ -9,6 +9,7 @@ from realt.model.mp import MP
 from realt.model.partyaffiliation import Affiliation
 from realt.model.bill import Bill
 from realt.model.housevote import HouseVote
+from realt.model.housevote_raw import RawHouseVote
 from realt.model.membervote import MemberVote
 
 def init_model(engine):
