@@ -13,20 +13,24 @@ log = logging.getLogger(__name__)
 class XmlimportController(BaseController):
 
     @expose('json')
-    def index(self, parliament, session, vote_number=None):
+    def index(self, parliament, session, vote_number=None, limit=1):
         if vote_number is not None:
             vote_number = int(vote_number)
         parliament = int(parliament)
         session = int(session)
+        limit = int(limit)
 
-        data = self._pull_data(parliament, session, vote_number)
+        data = self._pull_data(parliament, session, vote_number, limit)
         return data
 
-    def _pull_data(self, parliament, session, vote_number):
+    def _pull_data(self, parliament, session, vote_number, limit=1):
         if vote_number:
             vote_numbers = [vote_number]
         else:
             vote_numbers = votes_in_session(parliament, session)
+
+        if limit > 0 and len(vote_numbers) > limit:
+            vote_numbers = vote_numbers[:limit]
 
         rawvotes = Session.query(RawHouseVote)\
             .filter(RawHouseVote.parliament==parliament)\
