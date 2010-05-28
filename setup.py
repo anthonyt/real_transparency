@@ -14,7 +14,7 @@ setup(
     url='',
     install_requires=[
         "Pylons == 1.0rc1",
-        "SQLAlchemy == 0.6beta3",
+        "SQLAlchemy == 0.6",
         "Genshi == 0.5.1",
         "lxml",
     ],
