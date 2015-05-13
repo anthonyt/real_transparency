@@ -1,11 +1,9 @@
 import logging
 
-from pylons import request, response, session, tmpl_context as c, url
-from pylons.controllers.util import abort, redirect
-
 from realt.lib.base import BaseController
 from realt.lib.decorators import expose
-from realt.lib.parliament_xml import chamber_vote_details, votes_in_session
+from realt.lib.parliament_xml import chamber_vote_details
+from realt.lib.parliament_xml import votes_in_session
 from realt.model import RawHouseVote
 from realt.model.meta import Session
 
