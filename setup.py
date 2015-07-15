@@ -12,6 +12,7 @@ setup(
         # direct dependencies
         'nose == 1.3.7',
         'mock == 1.1.3',
+        'lxml == 3.4.4',
         'requests == 2.7.0',
 
         # sub-dependencies
