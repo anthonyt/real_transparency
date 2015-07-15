@@ -3,11 +3,11 @@ doc doc doc
 """
 __all__ = ['chamber_vote_details', 'votes_in_session']
 
+from realt import memoize
+
 import urllib
 import datetime
 import lxml.etree as ET
-
-cached_xml = dict()
 
 parliament_url = "http://www2.parl.gc.ca"
 
@@ -55,6 +55,7 @@ def get_votes_url(parliament, session, vote_number):
     log.info("Votes URL for (%d, %d, %d): %s", parliament, session, vote_number, url)
     return url
 
+@memoize
 def get_bills_xml(parliament, session):
     """Returns the xml string listing all votes, based on id numbers.
 
@@ -65,19 +66,15 @@ def get_bills_xml(parliament, session):
     :type session: int
     """
     # TODO: catch file IO exceptions
-    hash = 'bills_%d-%d' % ( parliament, session )
-    if hash in cached_xml:
-        log.info('Returning cached bills XML for (%d, %d)', parliament, session)
-        return cached_xml[hash]
     url = get_bills_url(parliament, session)
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
-    cached_xml[hash] = xml
     filehandle.close()
     log.info('Got bills XML for (%d, %d)', parliament, session)
     return xml
 
+@memoize
 def get_votes_xml(parliament, session, vote_number):
     """Returns the XML string for a vote, based on id numbers.
 
@@ -91,16 +88,10 @@ def get_votes_xml(parliament, session, vote_number):
     :type vote_number: int
     """
     # TODO: catch file IO exceptions
-    hash = 'votes_%d-%d-%d' % ( parliament, session, vote_number )
-    if hash in cached_xml:
-        log.info('Returning cached votes XML for (%d, %d, %d)', parliament, session, vote_number)
-        return cached_xml[hash]
-
     url = get_votes_url(parliament, session, vote_number)
     filehandle = urllib.urlopen(url)
 
     xml = filehandle.read()
-    cached_xml[hash] = xml
     filehandle.close()
     log.info('Got votes XML for (%d, %d, %d)', parliament, session, vote_number)
     return xml
