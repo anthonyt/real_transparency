@@ -10,8 +10,6 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[
         # Dependencies
-        'nose == 1.3.7',
-        'mock == 1.1.3',
         'lxml == 3.4.4',
         'requests == 2.7.0',
 
