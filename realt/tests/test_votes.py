@@ -1,11 +1,15 @@
-from unittest import TestCase
-from realt.votes import get_bills_url
-from realt.votes import get_votes_url
+import collections
+import os.path
+import unittest
 
-class TestURLs(TestCase):
+import mock
+
+from realt import votes
+
+class TestURLs(unittest.TestCase):
 
     def test_get_bills_url(self):
-        url = get_bills_url(1234, 5678)
+        url = votes.get_bills_url(1234, 5678)
         # XXX: Should we actually be testing that the params are in a
         #      particular order?
         self.assertEqual(url,
@@ -16,7 +20,7 @@ class TestURLs(TestCase):
         )
 
     def test_get_votes_url(self):
-        url = get_votes_url(1234, 5678, 91011)
+        url = votes.get_votes_url(1234, 5678, 91011)
         # XXX: Should we actually be testing that the params are in a
         #      particular order?
         self.assertEqual(url,
