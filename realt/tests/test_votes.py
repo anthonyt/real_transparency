@@ -29,3 +29,16 @@ class TestURLs(unittest.TestCase):
             "FltrSess=5678&FltrParl=1234"
         )
 
+    def test_votes_in_session(self):
+        test_xml_path = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), 'bills_xml_40_40.xml',
+        ))
+        with open(test_xml_path, 'rb') as f:
+            content = f.read()
+        MockedResponse = collections.namedtuple('MockedResponse', ['content'])
+        mocked_response = MockedResponse(content=content)
+
+        with mock.patch('requests.get', return_value=mocked_response):
+            votes_in_session = votes.votes_in_session(40, 40)
+
+        self.assertEqual(votes_in_session, range(467, 0, -1))
