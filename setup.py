@@ -9,13 +9,15 @@ setup(
     license='Apache License 2.0',
     long_description=open('README.md').read(),
     install_requires=[
-        # direct dependencies
+        # Dependencies
         'nose == 1.3.7',
         'mock == 1.1.3',
         'lxml == 3.4.4',
         'requests == 2.7.0',
 
-        # sub-dependencies
+        # Dependencies of our dependencies
+        # Pinned to specific versions to avoid bugs that might be introduced
+        # by future versions.
         'six == 1.9.0',
         'pbr == 1.3.0',
         'funcsigs == 0.4',
