@@ -7,6 +7,7 @@ from realt import memoize
 
 import urllib
 import datetime
+import requests
 import lxml.etree as ET
 
 parliament_url = "http://www2.parl.gc.ca"
@@ -65,12 +66,11 @@ def get_bills_xml(parliament, session):
     :param session: the session number within the parliament
     :type session: int
     """
-    # TODO: catch file IO exceptions
+    # TODO: catch HTTP and network errors.
     url = get_bills_url(parliament, session)
-    filehandle = urllib.urlopen(url)
+    response = requests.get(url)
+    xml = response.content
 
-    xml = filehandle.read()
-    filehandle.close()
     log.info('Got bills XML for (%d, %d)', parliament, session)
     return xml
 
@@ -87,12 +87,11 @@ def get_votes_xml(parliament, session, vote_number):
     :param vote_number: the vote number within the session
     :type vote_number: int
     """
-    # TODO: catch file IO exceptions
+    # TODO: catch HTTP and network errors.
     url = get_votes_url(parliament, session, vote_number)
-    filehandle = urllib.urlopen(url)
+    response = requests.get(url)
+    xml = response.content
 
-    xml = filehandle.read()
-    filehandle.close()
     log.info('Got votes XML for (%d, %d, %d)', parliament, session, vote_number)
     return xml
 
@@ -143,11 +142,10 @@ class ChamberVoteDetails(object):
         self.journal is a tuple of unicode objects representing the title and
         URL this vote's published entry in the house journals.
         """
-        # TODO: catch file IO exceptions
+        # TODO: catch HTTP and network errors.
         url = get_votes_url(self.parliament, self.session, self.number).replace('xml=True', 'xml=False')
-        filehandle = urllib.urlopen(url)
-        html = filehandle.read()
-        filehandle.close()
+        response = requests.get(url)
+        html = response.content
 
         title = ''
         link = ''
