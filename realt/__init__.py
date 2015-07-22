@@ -21,7 +21,7 @@ def memoize(func):
     def wrapper(*args, **kwargs):
         key = args, frozenset(kwargs.iteritems())
         if key in cache:
-            log.debug('Returning cached value for %s(%r, %r)', func.__name__, *args, **kwargs)
+            log.debug('Returning cached value for %s%r', func.__name__, key)
             return cache[key]
         else:
             cache[key] = result = func(*args, **kwargs)
