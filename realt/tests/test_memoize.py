@@ -1,12 +1,12 @@
-from collections import Counter
-from unittest import TestCase
+import collections
+import unittest
 
-from realt import memoize
+import realt
 
-class TestMemoize(TestCase):
+class TestMemoize(unittest.TestCase):
     def test_memoize(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func():
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
@@ -18,8 +18,8 @@ class TestMemoize(TestCase):
         self.assertEqual(calls['dummy_func'], 1)
 
     def test_memoize_reset(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func():
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
@@ -32,8 +32,8 @@ class TestMemoize(TestCase):
         self.assertEqual(calls['dummy_func'], 2)
 
     def test_memoize_args(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func(a, b):
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
@@ -47,8 +47,8 @@ class TestMemoize(TestCase):
         self.assertEqual(calls['dummy_func'], 2)
 
     def test_memoize_kwargs(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func(a, b):
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
@@ -62,8 +62,8 @@ class TestMemoize(TestCase):
         self.assertEqual(calls['dummy_func'], 2)
 
     def test_memoize_args_kwargs(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func(a, b):
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
@@ -77,8 +77,8 @@ class TestMemoize(TestCase):
         self.assertEqual(calls['dummy_func'], 2)
 
     def test_memoize_conflicting_args_kwargs(self):
-        calls = Counter()
-        @memoize
+        calls = collections.Counter()
+        @realt.memoize
         def dummy_func(a, b):
             calls['dummy_func'] += 1
             return 'Called %d times' % (calls['dummy_func'],)
