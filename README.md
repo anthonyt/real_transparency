@@ -16,3 +16,11 @@ To install, or update dependencies, for development, run:
 To package, for distribution, run:
 
     $ python setup.py sdist
+
+To execute the tests, run:
+
+    $ nosetests
+
+OR
+
+    $ nosetests --ipdb --ipdb-failures
