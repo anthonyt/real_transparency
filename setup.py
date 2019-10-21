@@ -11,7 +11,7 @@ setup(
     install_requires=[
         # Dependencies
         'lxml == 3.4.4',
-        'requests == 2.7.0',
+        'requests == 2.20.0',
 
         # Dependencies of our dependencies
         # Pinned to specific versions to avoid bugs that might be introduced
