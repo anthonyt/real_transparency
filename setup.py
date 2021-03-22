@@ -10,7 +10,7 @@ setup(
     long_description=open('README.md').read(),
     install_requires=[
         # Dependencies
-        'lxml == 3.4.4',
+        'lxml == 4.6.3',
         'requests == 2.7.0',
 
         # Dependencies of our dependencies
